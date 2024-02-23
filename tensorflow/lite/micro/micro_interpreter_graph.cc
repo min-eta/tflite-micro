@@ -24,6 +24,8 @@ limitations under the License.
 #include "tensorflow/lite/micro/micro_profiler.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
+extern int eta_error_code;
+
 namespace tflite {
 namespace {
 
@@ -103,6 +105,7 @@ TfLiteStatus MicroInterpreterGraph::PrepareSubgraphs() {
         if (prepare_status != kTfLiteOk) {
           MicroPrintf("Node %s (number %df) failed to prepare with status %d",
                       OpNameFromRegistration(registration), i, prepare_status);
+          eta_error_code = 2;
           return kTfLiteError;
         }
       }

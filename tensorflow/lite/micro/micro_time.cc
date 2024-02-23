@@ -25,6 +25,7 @@ limitations under the License.
 // tensorflow/lite/micro/bluepill/micro_time.cc
 
 #include "tensorflow/lite/micro/micro_time.h"
+#include "timer.h"
 
 #if defined(TF_LITE_USE_CTIME)
 #include <ctime>
@@ -38,13 +39,15 @@ namespace tflite {
 // for a platform to support Tensorflow Lite for Microcontrollers profiling.
 // This returns 0 by default because timing is an optional feature that builds
 // without errors on platforms that do not need it.
-uint32_t ticks_per_second() { return 0; }
+uint32_t ticks_per_second() { return 1000000; }
+//uint32_t ticks_per_second() { return 0; }
 
 // Reference implementation of the GetCurrentTimeTicks() function that's
 // required for a platform to support Tensorflow Lite for Microcontrollers
 // profiling. This returns 0 by default because timing is an optional feature
 // that builds without errors on platforms that do not need it.
-uint32_t GetCurrentTimeTicks() { return 0; }
+uint32_t GetCurrentTimeTicks() { return TIMER_GetTimeInUS(); }
+//uint32_t GetCurrentTimeTicks() { return 0; }
 
 #else  // defined(TF_LITE_USE_CTIME)
 

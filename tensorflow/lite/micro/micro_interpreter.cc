@@ -32,6 +32,8 @@ limitations under the License.
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/schema/schema_utils.h"
 
+extern int eta_error_code;
+
 namespace tflite {
 namespace {
 MemoryPlannerType FlagToMemoryPlannerType(bool preserve_all_tensors) {
@@ -238,6 +240,7 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
         "Failed to allocate memory for context->input_tensors_, "
         "%d bytes required",
         sizeof(TfLiteTensor*) * inputs_size());
+    eta_error_code = 1;
     return kTfLiteError;
   }
 
@@ -246,6 +249,7 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
         model_, graph_.GetAllocations(), inputs().Get(i), 0);
     if (input_tensors_[i] == nullptr) {
       MicroPrintf("Failed to initialize input tensor %d", i);
+      eta_error_code = 1;
       return kTfLiteError;
     }
   }
@@ -260,6 +264,7 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
         "Failed to allocate memory for context->output_tensors_, "
         "%d bytes required",
         sizeof(TfLiteTensor*) * outputs_size());
+    eta_error_code = 1;
     return kTfLiteError;
   }
 
@@ -268,6 +273,7 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
         model_, graph_.GetAllocations(), outputs().Get(i), 0);
     if (output_tensors_[i] == nullptr) {
       MicroPrintf("Failed to initialize output tensor %d", i);
+      eta_error_code = 1;
       return kTfLiteError;
     }
   }

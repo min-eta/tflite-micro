@@ -26,6 +26,8 @@ limitations under the License.
 #include "tensorflow/lite/micro/memory_helpers.h"
 #include "tensorflow/lite/micro/micro_log.h"
 
+extern int eta_error_code;
+
 namespace tflite {
 
 SingleArenaBufferAllocator::SingleArenaBufferAllocator(uint8_t* buffer_head,
@@ -97,6 +99,7 @@ TfLiteStatus SingleArenaBufferAllocator::ResizeBuffer(uint8_t* resizable_buf,
     MicroPrintf(
         "Failed to resize buffer. Requested: %u, available %u, missing: %u",
         size, available_memory, size - available_memory);
+    eta_error_code = 1;
     return kTfLiteError;
   }
   head_ = aligned_result + size;
