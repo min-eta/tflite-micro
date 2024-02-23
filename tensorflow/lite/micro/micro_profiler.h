@@ -58,7 +58,7 @@ class MicroProfiler : public MicroProfilerInterface {
 
   // Prints the profiling information of each of the events in CSV (Comma
   // Separated Value) form.
-  void LogCsv() const;
+  void LogCsv();
 
   // Prints  total ticks for each unique tag in CSV format.
   // Output will have one row for each unique tag along with the
@@ -84,8 +84,10 @@ class MicroProfiler : public MicroProfilerInterface {
   // events. But it is theoretically possible that each event to be unique and
   // hence we allow total_ticks_per_tag to have kMaxEvents entries.
   TicksPerTag total_ticks_per_tag[kMaxEvents] = {};
+  TicksPerTag per_tag_tracker[64] = {};
 
   int FindExistingOrNextPosition(const char* tag_name);
+  int FindTrackerPosition(const char* tag_name);
 
   TF_LITE_REMOVE_VIRTUAL_DELETE;
 };

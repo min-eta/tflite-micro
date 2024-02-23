@@ -56,12 +56,13 @@ void MicroProfiler::Log() const {
 #if !defined(TF_LITE_STRIP_ERROR_STRINGS)
   for (int i = 0; i < num_events_; ++i) {
     uint32_t ticks = end_ticks_[i] - start_ticks_[i];
-    MicroPrintf("%s took %u ticks (%d ms).", tags_[i], ticks, TicksToMs(ticks));
+    MicroPrintf("%s took %d ticks (%d ms).", tags_[i], ticks, TicksToMs(ticks));
   }
 #endif
 }
 
-void MicroProfiler::LogCsv() const {
+void MicroProfiler::LogCsv() {
+#if 0
 #if !defined(TF_LITE_STRIP_ERROR_STRINGS)
   MicroPrintf("\"Event\",\"Tag\",\"Ticks\"");
   for (int i = 0; i < num_events_; ++i) {
@@ -71,7 +72,40 @@ void MicroProfiler::LogCsv() const {
 #else
     uint32_t ticks = end_ticks_[i] - start_ticks_[i];
     MicroPrintf("%d,%s,%" PRIu32, i, tags_[i], ticks);
+  }
 #endif
+#endif
+#else
+  for (int j = 0; j < num_events_; ++j) {
+    TFLITE_DCHECK(tags_[j] != nullptr);
+    int position = FindTrackerPosition(tags_[j]);
+    TFLITE_DCHECK(position >= 0);
+    TicksPerTag each_tag_entry = per_tag_tracker[position];
+    if (each_tag_entry.tag == nullptr) {
+      per_tag_tracker[position].tag = tags_[j];
+      per_tag_tracker[position].ticks = j;  // Here ticks stores the first index for this type of tag
+    }
+  }
+
+  for (int i = 0; i < num_events_; ++i) {
+    uint32_t ticks = end_ticks_[i] - start_ticks_[i];
+    int position = FindTrackerPosition(tags_[i]);
+    int comp = strcmp(tags_[i], "NeutronGraph");
+    if (comp == 0) {
+      MicroPrintf("{\"event\":\"layerRuntime\",\"value\":{\"layer_num\":%d,\"layer_type\":\"%s\",\"layer_name\":\"%s_%d\",\"target_core\":\"NPU\",\"time_us\":%d,\"cycles\":%d}}", 
+          i, tags_[i], tags_[i], i-per_tag_tracker[position].ticks, ticks, ticks*150);
+    }
+    else {
+      int comp1 = strcmp(tags_[i], "SOFTMAX");
+      if (comp1 == 0) {
+        MicroPrintf("{\"event\":\"layerRuntime\",\"value\":{\"layer_num\":%d,\"layer_type\":\"%s\",\"layer_name\":\"%s_%d\",\"target_core\":\"PowerQuad\",\"time_us\":%d,\"cycles\":%d}}", 
+            i, tags_[i], tags_[i], i-per_tag_tracker[position].ticks, ticks, ticks*150);
+      }
+      else {
+        MicroPrintf("{\"event\":\"layerRuntime\",\"value\":{\"layer_num\":%d,\"layer_type\":\"%s\",\"layer_name\":\"%s_%d\",\"target_core\":\"Cortex-M33\",\"time_us\":%d,\"cycles\":%d}}", 
+            i, tags_[i], tags_[i], i-per_tag_tracker[position].ticks, ticks, ticks*150);
+      }
+    }
   }
 #endif
 }
@@ -113,6 +147,18 @@ int MicroProfiler::FindExistingOrNextPosition(const char* tag_name) {
   int pos = 0;
   for (; pos < num_events_; pos++) {
     TicksPerTag each_tag_entry = total_ticks_per_tag[pos];
+    if (each_tag_entry.tag == nullptr ||
+        strcmp(each_tag_entry.tag, tag_name) == 0) {
+      return pos;
+    }
+  }
+  return pos < num_events_ ? pos : -1;
+}
+
+int MicroProfiler::FindTrackerPosition(const char* tag_name) {
+  int pos = 0;
+  for (; pos < num_events_; pos++) {
+    TicksPerTag each_tag_entry = per_tag_tracker[pos];
     if (each_tag_entry.tag == nullptr ||
         strcmp(each_tag_entry.tag, tag_name) == 0) {
       return pos;
